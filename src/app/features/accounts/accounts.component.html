@@ -1,0 +1,61 @@
+<section class="bg-white">
+    <div class="mx-auto max-w-6xl px-6 py-20">
+        <div class="space-y-12">
+            <header class="space-y-4">
+                <h1 class="text-3xl font-semibold text-midnight">Accounts centre</h1>
+                <p class="text-slate-500">
+                    Explore balances, available cash, and last updated timestamps. The data streams from the mock API so
+                    you can swap in live services later.
+                </p>
+                <div *ngIf="totals$ | async as totals"
+                    class="flex flex-wrap items-center gap-4 rounded-3xl border border-slate-200 bg-mist px-6 py-4 text-sm text-slate-600">
+                    <span>Total accounts: <strong class="text-midnight">{{ totals.count }}</strong></span>
+                    <span>Combined balance: <strong class="text-midnight">{{ totals.totalBalance |
+                            currency:'USD' }}</strong></span>
+                </div>
+            </header>
+
+            <div class="grid gap-6 md:grid-cols-2 xl:grid-cols-3" *ngIf="accounts$ | async as accounts">
+                <article *ngFor="let account of accounts"
+                    class="flex h-full flex-col rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <span class="text-2xl">{{ account.icon || '🏦' }}</span>
+                            <div>
+                                <h2 class="text-lg font-semibold text-midnight">{{ account.name }}</h2>
+                                <p class="text-xs uppercase tracking-wide text-slate-400">{{ account.type }}</p>
+                            </div>
+                        </div>
+                        <span class="rounded-full bg-mist px-3 py-1 text-xs text-slate-500">{{ account.accountNumber
+                            }}</span>
+                    </div>
+                    <div class="mt-6 space-y-2 text-sm text-slate-500">
+                        <p class="flex items-center justify-between">
+                            <span>Balance</span>
+                            <span class="text-lg font-semibold text-midnight">{{ account.balance |
+                                currency:account.currency }}</span>
+                        </p>
+                        <p class="flex items-center justify-between">
+                            <span>Available</span>
+                            <span class="font-medium text-emerald-500">{{ account.availableBalance |
+                                currency:account.currency }}</span>
+                        </p>
+                        <p class="text-xs text-slate-400">Updated {{ account.lastUpdated | date:'short' }}</p>
+                    </div>
+                    <div class="mt-auto pt-6">
+                        <a routerLink="/transactions"
+                            class="inline-flex items-center gap-2 text-sm font-medium text-midnight hover:underline">
+                            View transactions
+                            <span aria-hidden="true">→</span>
+                        </a>
+                    </div>
+                </article>
+            </div>
+
+            <div class="rounded-3xl border border-dashed border-slate-200 p-8 text-sm text-slate-500">
+                Bring this section to life with account details, statements, downloadable exports, or quick actions like
+                card freeze toggles.
+            </div>
+        </div>
+    </div>
+</section>

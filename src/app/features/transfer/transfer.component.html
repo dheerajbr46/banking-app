@@ -1,0 +1,107 @@
+<section class="bg-white">
+    <div class="mx-auto max-w-5xl px-6 py-20">
+        <div class="rounded-3xl border border-slate-200 bg-white p-10 shadow-sm">
+            <h1 class="text-3xl font-semibold text-midnight">Transfer funds</h1>
+            <p class="mt-4 text-slate-500">
+                Kick off mock transfers between accounts. The form is fully reactive—swap the submit handler with a
+                real API call when ready.
+            </p>
+
+            <div class="mt-8 grid gap-6 md:grid-cols-2">
+                <form [formGroup]="transferForm" (ngSubmit)="submit()"
+                    class="space-y-6 rounded-2xl border border-slate-200 bg-mist p-6 text-sm text-slate-600">
+                    <div class="space-y-2">
+                        <label class="text-sm font-medium text-midnight" for="fromAccount">From account</label>
+                        <select id="fromAccount" formControlName="fromAccountId"
+                            class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-midnight focus:border-midnight focus:outline-none focus:ring-2 focus:ring-midnight/20">
+                            <option value="" disabled>Select account</option>
+                            <option *ngFor="let account of (accounts$ | async)" [value]="account.id">
+                                {{ account.name }} · {{ account.accountNumber }}
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="text-sm font-medium text-midnight" for="toAccount">To account</label>
+                        <select id="toAccount" formControlName="toAccountId"
+                            class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-midnight focus:border-midnight focus:outline-none focus:ring-2 focus:ring-midnight/20">
+                            <option value="" disabled>Select destination</option>
+                            <option *ngFor="let account of (accounts$ | async)" [value]="account.id">
+                                {{ account.name }} · {{ account.accountNumber }}
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="grid gap-4 md:grid-cols-2">
+                        <div class="space-y-2">
+                            <label class="text-sm font-medium text-midnight" for="amount">Amount</label>
+                            <input id="amount" type="number" formControlName="amount" min="1" step="0.01"
+                                class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-midnight focus:border-midnight focus:outline-none focus:ring-2 focus:ring-midnight/20">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-sm font-medium text-midnight" for="schedule">Frequency</label>
+                            <select id="schedule" formControlName="schedule"
+                                class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-midnight focus:border-midnight focus:outline-none focus:ring-2 focus:ring-midnight/20">
+                                <option value="once">Once</option>
+                                <option value="weekly">Weekly</option>
+                                <option value="monthly">Monthly</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="text-sm font-medium text-midnight" for="memo">Memo (optional)</label>
+                        <input id="memo" type="text" formControlName="memo"
+                            class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-midnight focus:border-midnight focus:outline-none focus:ring-2 focus:ring-midnight/20"
+                            placeholder="Describe this transfer" />
+                    </div>
+
+                    <button type="submit"
+                        class="inline-flex w-full items-center justify-center rounded-full bg-midnight px-6 py-3 text-sm font-medium text-white transition hover:bg-slate-900 disabled:cursor-not-allowed disabled:opacity-70"
+                        [disabled]="!isValidTransfer()">
+                        Schedule transfer
+                    </button>
+
+                    <p *ngIf="confirmation()"
+                        class="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-600">
+                        {{ confirmation() }}
+                    </p>
+                </form>
+
+                <aside class="space-y-4 rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-600">
+                    <h2 class="text-lg font-semibold text-midnight">Transfer summary</h2>
+                    <div *ngIf="selectedAccounts$ | async as selected" class="space-y-3">
+                        <div class="rounded-xl border border-slate-200 bg-mist px-4 py-3">
+                            <p class="text-xs uppercase tracking-wide text-slate-400">From</p>
+                            <p class="text-sm font-medium text-midnight">{{ selected.from?.name || 'Select an account'
+                                }}</p>
+                            <p class="text-xs text-slate-500" *ngIf="selected.from">
+                                Balance: {{ selected.from.balance | currency:selected.from.currency }}
+                            </p>
+                        </div>
+                        <div class="rounded-xl border border-slate-200 bg-mist px-4 py-3">
+                            <p class="text-xs uppercase tracking-wide text-slate-400">To</p>
+                            <p class="text-sm font-medium text-midnight">{{ selected.to?.name || 'Choose a
+                                destination' }}</p>
+                            <p class="text-xs text-slate-500" *ngIf="selected.to">
+                                Available: {{ selected.to.availableBalance | currency:selected.to.currency }}
+                            </p>
+                        </div>
+                        <div class="rounded-xl border border-slate-200 bg-mist px-4 py-3">
+                            <p class="text-xs uppercase tracking-wide text-slate-400">Estimated arrival</p>
+                            <p class="text-sm font-medium text-midnight">
+                                {{ transferForm.controls.schedule.value === 'once' ? 'Same day (mock)' : '2 business
+                                days (mock)' }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="rounded-2xl border border-dashed border-slate-200 px-4 py-3 text-xs text-slate-500">
+                        Connect your animation library of choice here to celebrate successful transfers with micro
+                        interactions.
+                    </div>
+                </aside>
+            </div>
+        </div>
+    </div>
+</section>

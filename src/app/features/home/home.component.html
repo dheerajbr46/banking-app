@@ -1,0 +1,154 @@
+<div class="bg-white">
+    <section class="relative overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-b from-white via-white to-mist"></div>
+        <div class="relative mx-auto max-w-6xl px-6 pb-20 pt-24">
+            <div class="grid gap-16 lg:grid-cols-[1.1fr,1fr] lg:items-center">
+                <div class="space-y-8" data-anim="hero-text">
+                    <div class="flex items-center gap-3 text-sm uppercase tracking-[0.35rem] text-slate-400">
+                        <span class="h-px w-10 bg-slate-300"></span>
+                        Interactive Banking
+                    </div>
+                    <h1 class="text-4xl font-semibold tracking-tight text-midnight md:text-5xl lg:text-6xl">
+                        Bank smarter with simplicity
+                    </h1>
+                    <p class="max-w-xl text-lg text-slate-500 md:text-xl">
+                        A better way to see, move, and protect your money. Beautifully designed for clarity and calm,
+                        complete with motion ready for Apple-style hero animations.
+                    </p>
+                    <div class="flex flex-wrap items-center gap-4">
+                        <a routerLink="/auth"
+                            class="inline-flex items-center justify-center rounded-full bg-midnight px-8 py-3 text-sm font-medium text-white transition hover:bg-slate-900">
+                            Get started
+                        </a>
+                        <a routerLink="/dashboard"
+                            class="inline-flex items-center justify-center rounded-full border border-slate-200 px-8 py-3 text-sm font-medium text-midnight transition hover:border-slate-300 hover:bg-slate-100">
+                            Explore the dashboard
+                        </a>
+                    </div>
+                    <div class="grid max-w-xl gap-4 sm:grid-cols-3" data-anim="hero-features">
+                        <div *ngFor="let feature of featureTiles"
+                            class="flex flex-col gap-2 rounded-2xl border border-slate-200 bg-white/80 p-5 shadow-sm backdrop-blur transition hover:-translate-y-1 hover:shadow-lg">
+                            <span class="text-2xl">{{ feature.icon }}</span>
+                            <h3 class="text-base font-semibold text-midnight">{{ feature.title }}</h3>
+                            <p class="text-sm text-slate-500">{{ feature.description }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="relative flex justify-center" data-anim="hero-canvas">
+                    <div
+                        class="relative w-full max-w-md overflow-hidden rounded-3xl border border-slate-200/80 bg-white/70 p-6 shadow-xl backdrop-blur">
+                        <div class="mb-6 flex items-center justify-between">
+                            <div>
+                                <p class="text-xs uppercase tracking-widest text-slate-400">Balance</p>
+                                <p class="text-3xl font-semibold text-midnight">$24,680.24</p>
+                            </div>
+                            <div
+                                class="flex h-12 w-12 items-center justify-center rounded-full bg-mist text-lg font-semibold text-midnight">
+                                
+                            </div>
+                        </div>
+                        <div class="rounded-2xl bg-mist p-6">
+                            <div class="space-y-4">
+                                <div class="flex items-center justify-between" *ngFor="let stat of quickStats">
+                                    <div>
+                                        <p class="text-xs uppercase tracking-wide text-slate-400">{{ stat.label }}</p>
+                                        <p class="text-lg font-semibold text-midnight">{{ stat.value }}</p>
+                                    </div>
+                                    <span class="text-sm font-medium text-emerald-500">{{ stat.trend }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-6 space-y-3">
+                            <p class="text-xs uppercase tracking-widest text-slate-400">Recent activity</p>
+                            <div class="space-y-3">
+                                <div *ngFor="let item of activityLog"
+                                    class="flex items-center justify-between rounded-xl border border-slate-200 bg-white/80 px-4 py-3 text-sm text-slate-600">
+                                    <div>
+                                        <p class="font-medium text-midnight">{{ item.title }}</p>
+                                        <p class="text-xs text-slate-400">{{ item.time }}</p>
+                                    </div>
+                                    <span
+                                        [ngClass]="{ 'text-emerald-500': item.amount.startsWith('+'), 'text-rose-500': item.amount.startsWith('-') }"
+                                        class="font-semibold">
+                                        {{ item.amount }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div
+                            class="mt-8 h-24 rounded-2xl border border-dashed border-slate-200 bg-white/60 p-4 text-sm text-slate-400">
+                            Placeholder canvas for GSAP/AOS animation layer
+                        </div>
+                    </div>
+                    <div
+                        class="absolute -bottom-10 -right-10 hidden h-40 w-40 rounded-full bg-gradient-to-br from-midnight/10 to-midnight/40 blur-3xl lg:block">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="border-t border-slate-200 bg-white/70">
+        <div class="mx-auto max-w-6xl px-6 py-16">
+            <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+                <article class="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+                    <h2 class="text-lg font-semibold text-midnight">Seamless accounts</h2>
+                    <p class="mt-3 text-sm text-slate-500">
+                        View all balances, cards, and investments in one focus-first canvas. Effortless transfers
+                        between sub-accounts keep cash flowing.
+                    </p>
+                    <a routerLink="/accounts"
+                        class="mt-5 inline-flex items-center text-sm font-medium text-midnight hover:underline">Manage
+                        accounts →</a>
+                </article>
+                <article class="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+                    <h2 class="text-lg font-semibold text-midnight">Intelligent transactions</h2>
+                    <p class="mt-3 text-sm text-slate-500">
+                        Categorisation, search, and export ready for tax season. Create saved views for subscriptions,
+                        travel, and more.
+                    </p>
+                    <a routerLink="/transactions"
+                        class="mt-5 inline-flex items-center text-sm font-medium text-midnight hover:underline">Review
+                        transactions →</a>
+                </article>
+                <article class="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+                    <h2 class="text-lg font-semibold text-midnight">Guided transfers</h2>
+                    <p class="mt-3 text-sm text-slate-500">
+                        Move funds with confidence using guardrails, smart defaults, and biometric approvals.
+                    </p>
+                    <a routerLink="/transfer"
+                        class="mt-5 inline-flex items-center text-sm font-medium text-midnight hover:underline">Send
+                        money →</a>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <section class="bg-white">
+        <div class="mx-auto max-w-6xl px-6 py-16">
+            <div class="rounded-3xl border border-slate-200 bg-mist p-10 text-midnight">
+                <div class="grid gap-10 md:grid-cols-2 md:items-center">
+                    <div>
+                        <h2 class="text-2xl font-semibold">Welcome to your dashboard</h2>
+                        <p class="mt-4 text-slate-600">
+                            Dive into a curated snapshot of your financial life. This space is reserved for responsive
+                            cards, charts, and micro-interactions that will come alive with GSAP or AOS.
+                        </p>
+                    </div>
+                    <div class="grid gap-4">
+                        <div class="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-600">
+                            Dashboard cards placeholder — plug charts or metrics here.
+                        </div>
+                        <div class="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-600">
+                            Create custom views for goals, budgets, and milestones.
+                        </div>
+                        <div class="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-600">
+                            Animate entry with fade and subtle parallax scroll reveals.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>

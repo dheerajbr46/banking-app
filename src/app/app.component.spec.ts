@@ -1,16 +1,19 @@
+import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { RouterModule } from '@angular/router';
+import { RouterTestingModule } from '@angular/router/testing';
+import { BehaviorSubject } from 'rxjs';
+
 import { AppComponent } from './app.component';
+import { AuthService } from './core/auth/auth.service';
+import { UserProfile } from './core/models/user.model';
 
 describe('AppComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [
-        RouterModule.forRoot([])
-      ],
-      declarations: [
-        AppComponent
-      ],
+      imports: [RouterTestingModule],
+      declarations: [AppComponent],
+      providers: [{ provide: AuthService, useClass: AuthServiceStub }],
+      schemas: [NO_ERRORS_SCHEMA],
     }).compileComponents();
   });
 
@@ -30,6 +33,12 @@ describe('AppComponent', () => {
     const fixture = TestBed.createComponent(AppComponent);
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain('Hello, banking-app');
+    expect(compiled.querySelector('header a')?.textContent).toContain('Bank');
   });
 });
+
+class AuthServiceStub {
+  private readonly userSubject = new BehaviorSubject<UserProfile | null>(null);
+  readonly currentUser$ = this.userSubject.asObservable();
+  logout = jasmine.createSpy('logout');
+}

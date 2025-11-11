@@ -1,0 +1,115 @@
+<section class="bg-white">
+    <div class="mx-auto max-w-6xl px-6 py-20">
+        <div class="rounded-3xl border border-slate-200 bg-white/90 p-10 shadow-sm">
+            <div class="grid gap-12 lg:grid-cols-[1.6fr,1fr] lg:items-start">
+                <div class="space-y-8">
+                    <header class="space-y-3">
+                        <h1 class="text-3xl font-semibold text-midnight">Your money at a glance</h1>
+                        <p class="text-slate-500">Fresh data streamed from the in-memory API demonstrates how the
+                            production services will hydrate this view.</p>
+                    </header>
+
+                    <div class="grid gap-4 md:grid-cols-3" *ngIf="summary$ | async as summary">
+                        <div class="rounded-2xl border border-slate-200 bg-mist p-6">
+                            <p class="text-xs uppercase tracking-wide text-slate-400">Net worth</p>
+                            <p class="mt-2 text-2xl font-semibold text-midnight">{{ summary.netWorth | currency:'USD' }}
+                            </p>
+                            <p class="mt-2 text-xs text-slate-500">Includes cash and investment balances.</p>
+                        </div>
+                        <div class="rounded-2xl border border-slate-200 bg-white p-6">
+                            <p class="text-xs uppercase tracking-wide text-slate-400">Monthly spend</p>
+                            <p class="mt-2 text-2xl font-semibold text-midnight">{{ summary.monthlySpend |
+                                currency:'USD' }}</p>
+                            <p class="mt-2 text-xs text-emerald-500">Savings rate {{ summary.savingsRate |
+                                percent:'1.0-0' }}</p>
+                        </div>
+                        <div class="rounded-2xl border border-slate-200 bg-white p-6">
+                            <p class="text-xs uppercase tracking-wide text-slate-400">Cash on hand</p>
+                            <p class="mt-2 text-2xl font-semibold text-midnight">{{ (totalCash$ | async) |
+                                currency:'USD' }}</p>
+                            <p class="mt-2 text-xs text-slate-500">Checking + savings accounts.</p>
+                        </div>
+                    </div>
+
+                    <section class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <h2 class="text-lg font-semibold text-midnight">Top accounts</h2>
+                            <a routerLink="/accounts" class="text-sm font-medium text-midnight hover:underline">View
+                                all accounts</a>
+                        </div>
+                        <div class="grid gap-4 md:grid-cols-2" *ngIf="topAccounts$ | async as topAccounts">
+                            <article *ngFor="let account of topAccounts"
+                                class="rounded-2xl border border-slate-200 bg-white px-6 py-5 shadow-sm">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-2xl">{{ account.icon || '🏦' }}</span>
+                                    <span
+                                        class="rounded-full bg-mist px-3 py-1 text-xs font-medium uppercase text-slate-500">{{
+                                        account.type }}</span>
+                                </div>
+                                <h3 class="mt-4 text-lg font-semibold text-midnight">{{ account.name }}</h3>
+                                <p class="mt-2 text-sm text-slate-500">{{ account.accountNumber }}</p>
+                                <p class="mt-4 text-2xl font-semibold text-midnight">{{ account.balance |
+                                    currency:account.currency }}</p>
+                                <p class="mt-2 text-xs text-slate-400">Updated
+                                    {{ account.lastUpdated | date:'shortTime' }}</p>
+                            </article>
+                        </div>
+                    </section>
+
+                    <section class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <h2 class="text-lg font-semibold text-midnight">Recent activity</h2>
+                            <a routerLink="/transactions" class="text-sm font-medium text-midnight hover:underline">Open
+                                transactions</a>
+                        </div>
+                        <div class="space-y-3" *ngIf="recentTransactions$ | async as recent">
+                            <article *ngFor="let tx of recent"
+                                class="flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-5 py-4 text-sm">
+                                <div>
+                                    <p class="font-medium text-midnight">{{ tx.description }}</p>
+                                    <p class="text-xs text-slate-400">{{ tx.category }} · {{ tx.date | date:'short' }}
+                                    </p>
+                                </div>
+                                <span class="text-sm font-semibold" [ngClass]="{
+                                        'text-emerald-500': tx.direction === 'credit',
+                                        'text-rose-500': tx.direction === 'debit'
+                                    }">
+                                    {{ tx.direction === 'credit' ? '+' : '-' }}{{ tx.amount |
+                                    currency:tx.currency:false:'1.2-2' }}
+                                </span>
+                            </article>
+                        </div>
+                    </section>
+                </div>
+
+                <aside class="space-y-6 rounded-2xl border border-slate-200 bg-mist/80 p-6">
+                    <div *ngIf="summary$ | async as summary" class="space-y-4">
+                        <h2 class="text-lg font-semibold text-midnight">Upcoming bills</h2>
+                        <div class="space-y-3">
+                            <div *ngFor="let bill of summary.upcomingBills"
+                                class="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm">
+                                <div class="flex items-center justify-between">
+                                    <span class="font-medium text-midnight">{{ bill.name }}</span>
+                                    <span class="text-slate-500">{{ bill.dueDate | date:'MMM d' }}</span>
+                                </div>
+                                <p class="mt-2 text-sm font-semibold text-midnight">{{ bill.amount | currency:'USD'
+                                    }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div *ngIf="summary$ | async as summaryInsights" class="space-y-4">
+                        <h2 class="text-lg font-semibold text-midnight">Insights</h2>
+                        <ul class="space-y-3">
+                            <li *ngFor="let insight of summaryInsights.insights"
+                                class="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600">
+                                <p class="font-medium text-midnight">{{ insight.title }}</p>
+                                <p class="text-sm text-slate-500">{{ insight.description }}</p>
+                            </li>
+                        </ul>
+                    </div>
+                </aside>
+            </div>
+        </div>
+    </div>
+</section>
