@@ -43,5 +43,5 @@ jobs:
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           branch: gh-pages
-          folder: dist/banking-app
+          folder: dist/banking-app/browser
           clean: true
