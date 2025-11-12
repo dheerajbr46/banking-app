@@ -10,57 +10,93 @@
             <div class="mt-8 grid gap-6 lg:grid-cols-[1.6fr,1fr]">
                 <div class="space-y-6">
                     <div class="flex flex-wrap items-center gap-2">
-                        <button type="button" class="rounded-full border px-4 py-2 text-sm transition"
+                        <button type="button"
+                            class="rounded-full border px-4 py-2 text-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-midnight/50"
                             [ngClass]="selectedAccountId() === null ? 'border-midnight bg-midnight text-white' : 'border-slate-200 text-slate-600 hover:border-midnight hover:text-midnight'"
-                            (click)="changeAccountFilter(null)">
+                            (click)="changeAccountFilter(null)" [attr.aria-pressed]="selectedAccountId() === null">
                             All accounts
                         </button>
-                        <ng-container *ngIf="accounts$ | async as accounts">
+                        <ng-container *ngIf="accounts$ | async as accounts; else accountChipsSkeleton">
                             <button *ngFor="let account of accounts" type="button"
-                                class="rounded-full border px-4 py-2 text-sm transition"
+                                class="rounded-full border px-4 py-2 text-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-midnight/50"
                                 [ngClass]="selectedAccountId() === account.id ? 'border-midnight bg-midnight text-white' : 'border-slate-200 text-slate-600 hover:border-midnight hover:text-midnight'"
-                                (click)="changeAccountFilter(account.id)">
+                                (click)="changeAccountFilter(account.id)"
+                                [attr.aria-pressed]="selectedAccountId() === account.id">
                                 {{ account.name }}
                             </button>
                         </ng-container>
                     </div>
-
-                    <div class="rounded-2xl border border-slate-200 bg-mist px-6 py-4 text-sm text-slate-600"
-                        *ngIf="totalForSelection$ | async as totals">
-                        <div class="flex flex-wrap items-center gap-4">
-                            <span>Inflows: <strong class="text-emerald-600">{{ totals.inflows | currency:'USD'
-                                    }}</strong></span>
-                            <span>Outflows: <strong class="text-rose-500">{{ totals.outflows | currency:'USD'
-                                    }}</strong></span>
-                            <span>Net: <strong class="text-midnight">{{ (totals.inflows - totals.outflows) |
-                                    currency:'USD' }}</strong></span>
+                    <ng-template #accountChipsSkeleton>
+                        <div class="flex flex-wrap items-center gap-2 animate-pulse" aria-hidden="true">
+                            <span *ngFor="let _ of accountChipSkeletons"
+                                class="h-9 w-24 rounded-full bg-slate-200"></span>
                         </div>
-                    </div>
+                    </ng-template>
 
-                    <div class="space-y-3" *ngIf="filteredTransactions$ | async as transactions">
-                        <article *ngFor="let tx of transactions"
-                            class="flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-5 py-4 text-sm">
-                            <div>
-                                <p class="font-medium text-midnight">{{ tx.description }}</p>
-                                <p class="text-xs text-slate-400">{{ tx.category }} · {{ tx.date | date:'medium' }}</p>
+                    <ng-container *ngIf="totalForSelection$ | async as totals; else totalSkeleton">
+                        <div class="rounded-2xl border border-slate-200 bg-mist px-6 py-4 text-sm text-slate-600"
+                            role="status" aria-live="polite">
+                            <div class="flex flex-wrap items-center gap-4">
+                                <span>Inflows: <strong class="text-emerald-600">{{ totals.inflows | currency:'USD'
+                                        }}</strong></span>
+                                <span>Outflows: <strong class="text-rose-500">{{ totals.outflows | currency:'USD'
+                                        }}</strong></span>
+                                <span>Net: <strong class="text-midnight">{{ (totals.inflows - totals.outflows) |
+                                        currency:'USD' }}</strong></span>
                             </div>
-                            <div class="text-right">
-                                <p class="text-base font-semibold" [ngClass]="{
-                                        'text-emerald-500': tx.direction === 'credit',
-                                        'text-rose-500': tx.direction === 'debit'
-                                    }">
-                                    {{ tx.direction === 'credit' ? '+' : '-' }}{{ tx.amount |
-                                    currency:tx.currency:false:'1.2-2'
-                                    }}
-                                </p>
-                                <p class="text-xs text-slate-400">{{ tx.status | titlecase }}</p>
+                        </div>
+                    </ng-container>
+                    <ng-template #totalSkeleton>
+                        <div class="rounded-2xl border border-slate-200 bg-mist px-6 py-4 animate-pulse"
+                            aria-hidden="true" aria-busy="true">
+                            <div class="flex flex-wrap items-center gap-4">
+                                <span *ngFor="let _ of totalSkeletons" class="h-4 w-28 rounded bg-slate-200"></span>
                             </div>
-                        </article>
-                        <p *ngIf="!transactions.length"
-                            class="rounded-2xl border border-slate-200 bg-white px-5 py-4 text-sm text-slate-500">
-                            No transactions found for this filter.
-                        </p>
-                    </div>
+                        </div>
+                    </ng-template>
+
+                    <ng-container *ngIf="filteredTransactions$ | async as transactions; else transactionsSkeleton">
+                        <div class="space-y-3">
+                            <article *ngFor="let tx of transactions"
+                                class="flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-5 py-4 text-sm">
+                                <div>
+                                    <p class="font-medium text-midnight">{{ tx.description }}</p>
+                                    <p class="text-xs text-slate-400">{{ tx.category }} · {{ tx.date | date:'medium' }}
+                                    </p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-base font-semibold" [ngClass]="{
+                                            'text-emerald-500': tx.direction === 'credit',
+                                            'text-rose-500': tx.direction === 'debit'
+                                        }">
+                                        {{ tx.direction === 'credit' ? '+' : '-' }}{{ tx.amount |
+                                        currency:tx.currency:false:'1.2-2'
+                                        }}
+                                    </p>
+                                    <p class="text-xs text-slate-400">{{ tx.status | titlecase }}</p>
+                                </div>
+                            </article>
+                            <p *ngIf="!transactions.length"
+                                class="rounded-2xl border border-slate-200 bg-white px-5 py-4 text-sm text-slate-500">
+                                No transactions found for this filter.
+                            </p>
+                        </div>
+                    </ng-container>
+                    <ng-template #transactionsSkeleton>
+                        <div class="space-y-3 animate-pulse" aria-hidden="true">
+                            <article *ngFor="let _ of transactionSkeletons"
+                                class="flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-5 py-4 text-sm">
+                                <div class="space-y-2">
+                                    <div class="h-4 w-48 rounded bg-slate-200"></div>
+                                    <div class="h-3 w-32 rounded bg-slate-100"></div>
+                                </div>
+                                <div class="space-y-2 text-right">
+                                    <div class="h-5 w-20 rounded bg-slate-200 ml-auto"></div>
+                                    <div class="h-3 w-16 rounded bg-slate-100 ml-auto"></div>
+                                </div>
+                            </article>
+                        </div>
+                    </ng-template>
                 </div>
 
                 <aside class="rounded-2xl border border-slate-200 bg-mist/70 p-6 text-sm text-slate-600">

@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  HostListener,
+  ViewChild,
+  computed,
+  inject,
+} from '@angular/core';
 import { Router } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 
@@ -27,7 +35,14 @@ export class AppComponent {
   private readonly router = inject(Router);
 
   mobileNavOpen = false;
+  readonly mobileNavPanelId = 'mobile-primary-nav';
   readonly currentYear = new Date().getFullYear();
+
+  @ViewChild('mobileNavPanel')
+  private mobileNavPanel?: ElementRef<HTMLElement>;
+
+  @ViewChild('mobileNavTrigger')
+  private mobileNavTrigger?: ElementRef<HTMLButtonElement>;
 
   private readonly currentUserSignal = toSignal<UserProfile | null>(
     this.authService.currentUser$,
@@ -44,10 +59,21 @@ export class AppComponent {
 
   toggleMobileNav(): void {
     this.mobileNavOpen = !this.mobileNavOpen;
+    if (this.mobileNavOpen) {
+      queueMicrotask(() => this.focusFirstMobileLink());
+    } else {
+      this.focusMobileNavTrigger();
+    }
   }
 
-  closeMobileNav(): void {
+  closeMobileNav(focusTrigger = false): void {
+    if (!this.mobileNavOpen) {
+      return;
+    }
     this.mobileNavOpen = false;
+    if (focusTrigger) {
+      this.focusMobileNavTrigger();
+    }
   }
 
   handleAuthCta(): void {
@@ -57,6 +83,33 @@ export class AppComponent {
     } else {
       this.router.navigate(['/auth']);
     }
-    this.closeMobileNav();
+    this.closeMobileNav(true);
+  }
+
+  @HostListener('document:keydown.escape')
+  handleEscape(): void {
+    if (this.mobileNavOpen) {
+      this.closeMobileNav(true);
+    }
+  }
+
+  @HostListener('window:resize')
+  handleResize(): void {
+    if (window.innerWidth >= 768 && this.mobileNavOpen) {
+      this.closeMobileNav();
+    }
+  }
+
+  private focusFirstMobileLink(): void {
+    const panel = this.mobileNavPanel?.nativeElement;
+    if (!panel) {
+      return;
+    }
+    const focusable = panel.querySelector<HTMLElement>('a, button');
+    focusable?.focus();
+  }
+
+  private focusMobileNavTrigger(): void {
+    this.mobileNavTrigger?.nativeElement.focus();
   }
 }

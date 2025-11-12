@@ -48,6 +48,10 @@ export class TransactionsComponent {
 
   readonly selectedAccountLabel = computed(() => this.selectedAccountId());
 
+  readonly accountChipSkeletons = Array.from({ length: 3 });
+  readonly transactionSkeletons = Array.from({ length: 6 });
+  readonly totalSkeletons = Array.from({ length: 3 });
+
   changeAccountFilter(accountId: string | null): void {
     this.selectedAccountId.set(accountId);
   }

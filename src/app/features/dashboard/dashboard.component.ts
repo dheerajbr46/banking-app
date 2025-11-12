@@ -31,6 +31,12 @@ export class DashboardComponent {
     )
   );
 
+  readonly metricSkeletons = Array.from({ length: 3 });
+  readonly topAccountSkeletons = Array.from({ length: 2 });
+  readonly transactionSkeletons = Array.from({ length: 5 });
+  readonly billsSkeletons = Array.from({ length: 3 });
+  readonly insightSkeletons = Array.from({ length: 3 });
+
   private toRecentTransactions(transactions: Transaction[]): Transaction[] {
     return [...transactions]
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
