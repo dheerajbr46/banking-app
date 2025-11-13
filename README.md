@@ -43,6 +43,25 @@ Key services:
 - `core/services/bank-data.service.ts` – Centralized HTTP wrapper.
 - `core/auth/auth.service.ts` – Mock login/logout with localStorage persistence.
 
+## Mock backend capabilities
+
+The in-memory API behaves like a lightweight backend so you can exercise every feature end-to-end:
+
+- **Transfers** – `POST /api/transfers` debits the source account, credits the destination, persists an audit entry, and surfaces a reference ID back to the UI.
+- **Manual transactions** – `POST /api/transactions` lets the Transactions screen log credits or debits that immediately update account balances and dashboard totals.
+- **Account maintenance** – `PUT /api/accounts/:id` supports inline edits from the Accounts grid (nickname, icon, balance adjustments).
+- **Profile updates** – `PUT /api/users/:id` syncs profile changes to both the mock API and the active auth session.
+
+All mutations flow through `BankDataService`, which emits a `refresh$` stream. Dashboard, Accounts, Transactions, Transfer, and Profile screens subscribe to that stream so they re-query fresh data after every change without manual refreshes.
+
+### Local feature walkthrough
+
+1. Launch the dev server with `npm start` and sign in with the seeded credentials (`avery@interactive.bank` / `banking123`).
+2. **Transfer funds** on the Transfer screen—watch confirmation messages include resolved account names and the Dashboard totals update immediately.
+3. **Log a manual transaction** on the Transactions screen to see account balances and inflow/outflow chips change in real time.
+4. **Edit an account** inline (for example, tweak the nickname or balance) and save to verify optimistic UI feedback and persistence.
+5. **Update your profile** to confirm the header avatar/name react to saved changes thanks to session syncing in `AuthService`.
+
 ## GitHub Pages deployment (GitHub Actions)
 
 This repo ships to GitHub Pages automatically via `.github/workflows/deploy.yml`.

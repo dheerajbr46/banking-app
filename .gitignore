@@ -5,6 +5,10 @@
 /tmp
 /out-tsc
 /bazel-out
+backend/target
+backend/.mvn
+backend/.idea
+
 
 # Node
 /node_modules

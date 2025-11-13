@@ -54,6 +54,11 @@ export class AuthService {
         this.currentUserSubject.next(null);
     }
 
+    updateSessionProfile(profile: UserProfile): void {
+        localStorage.setItem(STORAGE_USER_KEY, JSON.stringify(profile));
+        this.currentUserSubject.next(profile);
+    }
+
     get accessToken(): string | null {
         return localStorage.getItem(STORAGE_TOKEN_KEY);
     }

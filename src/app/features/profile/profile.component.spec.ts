@@ -10,9 +10,12 @@ import { UserProfile } from '../../core/models/user.model';
 class AuthServiceStub {
   private readonly userSubject = new BehaviorSubject<UserProfile | null>(null);
   readonly currentUser$ = this.userSubject.asObservable();
+
+  updateSessionProfile = jasmine.createSpy('updateSessionProfile');
 }
 
 const bankDataStub = {
+  refresh$: of(void 0),
   getUserProfile: () =>
     of({
       id: 'user-1',
@@ -21,6 +24,7 @@ const bankDataStub = {
       avatarUrl: '',
       jobTitle: 'Product Manager',
     }),
+  updateUserProfile: jasmine.createSpy('updateUserProfile').and.callFake((profile: UserProfile) => of(profile)),
 };
 
 describe('ProfileComponent', () => {

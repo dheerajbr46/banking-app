@@ -2,12 +2,35 @@ import { Injectable } from '@angular/core';
 import {
     InMemoryDbService,
     RequestInfo,
+    RequestInfoUtilities,
     ResponseOptions,
+    ParsedRequestUrl,
 } from 'angular-in-memory-web-api';
 
 import { Account } from '../models/account.model';
 import { Transaction } from '../models/transaction.model';
 import { DashboardSummary } from '../models/dashboard-summary.model';
+import { UserProfile } from '../models/user.model';
+
+type TransferSchedule = 'once' | 'weekly' | 'monthly';
+
+interface TransferRecord {
+    id: string;
+    createdAt: string;
+    fromAccountId: string;
+    toAccountId: string;
+    amount: number;
+    schedule: TransferSchedule;
+    memo?: string;
+}
+
+interface MockDatabase {
+    accounts: Account[];
+    transactions: Transaction[];
+    dashboardSummary: DashboardSummary;
+    users: MockUserRecord[];
+    transfers: TransferRecord[];
+}
 
 interface MockUserRecord {
     id: string;
@@ -18,7 +41,13 @@ interface MockUserRecord {
 
 @Injectable({ providedIn: 'root' })
 export class MockApiService implements InMemoryDbService {
-    createDb() {
+    private accounts: Account[] = [];
+    private transactions: Transaction[] = [];
+    private users: MockUserRecord[] = [];
+    private dashboardSummary!: DashboardSummary;
+    private transfers: TransferRecord[] = [];
+
+    createDb(): MockDatabase {
         const accounts: Account[] = [
             {
                 id: 'acc-1001',
@@ -155,11 +184,20 @@ export class MockApiService implements InMemoryDbService {
             },
         ];
 
+        const transfers: TransferRecord[] = [];
+
+        this.accounts = accounts;
+        this.transactions = transactions;
+        this.dashboardSummary = dashboardSummary;
+        this.users = users;
+        this.transfers = transfers;
+
         return {
             accounts,
             transactions,
             dashboardSummary,
             users,
+            transfers,
         };
     }
 
@@ -175,5 +213,240 @@ export class MockApiService implements InMemoryDbService {
         }
 
         return undefined; // fallback to default behaviour
+    }
+
+    post(reqInfo: RequestInfo) {
+        if (reqInfo.collectionName === 'transfers') {
+            return reqInfo.utils.createResponse$(() => this.createTransfer(reqInfo));
+        }
+
+        if (reqInfo.collectionName === 'transactions') {
+            return reqInfo.utils.createResponse$(() => this.createTransaction(reqInfo));
+        }
+
+        return undefined;
+    }
+
+    put(reqInfo: RequestInfo) {
+        if (reqInfo.collectionName === 'accounts') {
+            return reqInfo.utils.createResponse$(() => this.updateAccount(reqInfo));
+        }
+
+        if (reqInfo.collectionName === 'users') {
+            return reqInfo.utils.createResponse$(() => this.updateUser(reqInfo));
+        }
+
+        return undefined;
+    }
+
+    parseRequestUrl(url: string, utils: RequestInfoUtilities): ParsedRequestUrl {
+        const parsed = utils.parseRequestUrl(url);
+        if (parsed.collectionName === 'transfers') {
+            parsed.collectionName = 'transfers';
+        }
+        return parsed;
+    }
+
+    private createTransfer(reqInfo: RequestInfo): ResponseOptions {
+        const body = reqInfo.utils.getJsonBody(reqInfo.req) as {
+            fromAccountId: string;
+            toAccountId: string;
+            amount: number;
+            memo?: string;
+            schedule: TransferSchedule;
+        };
+
+        if (!body.fromAccountId || !body.toAccountId || body.amount <= 0) {
+            return {
+                status: 400,
+                body: { message: 'Invalid transfer payload.' },
+            } satisfies ResponseOptions;
+        }
+
+        const fromAccount = this.accounts.find((account) => account.id === body.fromAccountId);
+        const toAccount = this.accounts.find((account) => account.id === body.toAccountId);
+
+        if (!fromAccount || !toAccount) {
+            return {
+                status: 404,
+                body: { message: 'Account not found.' },
+            } satisfies ResponseOptions;
+        }
+
+        const timestamp = new Date().toISOString();
+
+        fromAccount.balance = Math.max(0, fromAccount.balance - body.amount);
+        fromAccount.availableBalance = Math.max(0, fromAccount.availableBalance - body.amount);
+        fromAccount.lastUpdated = timestamp;
+
+        toAccount.balance += body.amount;
+        toAccount.availableBalance += body.amount;
+        toAccount.lastUpdated = timestamp;
+
+        const debitTransaction: Transaction = {
+            id: `txn-${crypto.randomUUID?.() ?? Date.now()}`,
+            accountId: fromAccount.id,
+            description: body.memo?.trim() || `Transfer to ${toAccount.name}`,
+            category: 'Transfers',
+            amount: body.amount,
+            currency: fromAccount.currency,
+            direction: 'debit',
+            date: timestamp,
+            status: 'posted',
+        };
+
+        const creditTransaction: Transaction = {
+            id: `txn-${crypto.randomUUID?.() ?? Date.now()}-credit`,
+            accountId: toAccount.id,
+            description: body.memo?.trim() || `Transfer from ${fromAccount.name}`,
+            category: 'Transfers',
+            amount: body.amount,
+            currency: toAccount.currency,
+            direction: 'credit',
+            date: timestamp,
+            status: 'posted',
+        };
+
+        this.transactions.unshift(debitTransaction, creditTransaction);
+
+        const transferRecord: TransferRecord = {
+            id: `trf-${crypto.randomUUID?.() ?? Date.now()}`,
+            createdAt: timestamp,
+            fromAccountId: fromAccount.id,
+            toAccountId: toAccount.id,
+            amount: body.amount,
+            schedule: body.schedule,
+            memo: body.memo?.trim() || undefined,
+        };
+
+        this.transfers.unshift(transferRecord);
+
+        this.dashboardSummary.netWorth = this.accounts.reduce((total, account) => total + account.balance, 0);
+
+        this.syncDb(reqInfo);
+
+        return {
+            status: 201,
+            body: {
+                transferId: transferRecord.id,
+                createdAt: timestamp,
+                schedule: body.schedule,
+                amount: body.amount,
+                fromAccount,
+                toAccount,
+            },
+        } satisfies ResponseOptions;
+    }
+
+    private createTransaction(reqInfo: RequestInfo): ResponseOptions {
+        const body = reqInfo.utils.getJsonBody(reqInfo.req) as Transaction;
+        if (!body || !body.accountId || !body.amount) {
+            return {
+                status: 400,
+                body: { message: 'Invalid transaction payload.' },
+            } satisfies ResponseOptions;
+        }
+
+        const account = this.accounts.find((item) => item.id === body.accountId);
+        if (!account) {
+            return {
+                status: 404,
+                body: { message: 'Account not found.' },
+            } satisfies ResponseOptions;
+        }
+
+        const transaction: Transaction = {
+            ...body,
+            id: body.id ?? `txn-${crypto.randomUUID?.() ?? Date.now()}`,
+            date: body.date ?? new Date().toISOString(),
+            status: body.status ?? 'posted',
+            currency: account.currency,
+        };
+
+        this.transactions.unshift(transaction);
+
+        if (transaction.direction === 'credit') {
+            account.balance += transaction.amount;
+            account.availableBalance += transaction.amount;
+        } else {
+            account.balance = Math.max(0, account.balance - transaction.amount);
+            account.availableBalance = Math.max(0, account.availableBalance - transaction.amount);
+        }
+        account.lastUpdated = transaction.date;
+
+        this.dashboardSummary.netWorth = this.accounts.reduce((total, item) => total + item.balance, 0);
+
+        this.syncDb(reqInfo);
+
+        return {
+            status: 201,
+            body: transaction,
+        } satisfies ResponseOptions;
+    }
+
+    private updateAccount(reqInfo: RequestInfo): ResponseOptions {
+        const body = reqInfo.utils.getJsonBody(reqInfo.req) as Partial<Account> & { id: string };
+        if (!body?.id) {
+            return { status: 400, body: { message: 'Account id missing.' } } satisfies ResponseOptions;
+        }
+
+        const index = this.accounts.findIndex((item) => item.id === body.id);
+        if (index === -1) {
+            return { status: 404, body: { message: 'Account not found.' } } satisfies ResponseOptions;
+        }
+
+        const updated: Account = {
+            ...this.accounts[index],
+            ...body,
+            lastUpdated: body.lastUpdated ?? new Date().toISOString(),
+        };
+        this.accounts[index] = updated;
+
+        this.syncDb(reqInfo);
+
+        return {
+            status: 200,
+            body: updated,
+        } satisfies ResponseOptions;
+    }
+
+    private updateUser(reqInfo: RequestInfo): ResponseOptions {
+        const body = reqInfo.utils.getJsonBody(reqInfo.req) as Partial<MockUserRecord> & { id: string };
+        if (!body?.id) {
+            return { status: 400, body: { message: 'User id missing.' } } satisfies ResponseOptions;
+        }
+
+        const index = this.users.findIndex((item) => item.id === body.id);
+        if (index === -1) {
+            return { status: 404, body: { message: 'User not found.' } } satisfies ResponseOptions;
+        }
+
+        const updated: MockUserRecord = {
+            ...this.users[index],
+            ...body,
+        };
+        this.users[index] = updated;
+
+        this.syncDb(reqInfo);
+
+        const profile: UserProfile = {
+            id: updated.id,
+            name: updated.name,
+            email: updated.email,
+        };
+
+        return {
+            status: 200,
+            body: profile,
+        } satisfies ResponseOptions;
+    }
+
+    private syncDb(reqInfo: RequestInfo): void {
+        const db = reqInfo.utils.getDb() as MockDatabase;
+        db.accounts = this.accounts;
+        db.transactions = this.transactions;
+        db.dashboardSummary = this.dashboardSummary;
+        db.users = this.users;
+        db.transfers = this.transfers;
     }
 }

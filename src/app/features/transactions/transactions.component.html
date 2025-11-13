@@ -9,27 +9,24 @@
 
             <div class="mt-8 grid gap-6 lg:grid-cols-[1.6fr,1fr]">
                 <div class="space-y-6">
-                    <div class="flex flex-wrap items-center gap-2">
-                        <button type="button"
-                            class="rounded-full border px-4 py-2 text-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-midnight/50"
-                            [ngClass]="selectedAccountId() === null ? 'border-midnight bg-midnight text-white' : 'border-slate-200 text-slate-600 hover:border-midnight hover:text-midnight'"
-                            (click)="changeAccountFilter(null)" [attr.aria-pressed]="selectedAccountId() === null">
-                            All accounts
-                        </button>
-                        <ng-container *ngIf="accounts$ | async as accounts; else accountChipsSkeleton">
-                            <button *ngFor="let account of accounts" type="button"
-                                class="rounded-full border px-4 py-2 text-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-midnight/50"
-                                [ngClass]="selectedAccountId() === account.id ? 'border-midnight bg-midnight text-white' : 'border-slate-200 text-slate-600 hover:border-midnight hover:text-midnight'"
-                                (click)="changeAccountFilter(account.id)"
-                                [attr.aria-pressed]="selectedAccountId() === account.id">
-                                {{ account.name }}
-                            </button>
+                    <div class="space-y-2">
+                        <label for="accountFilter" class="text-sm font-medium text-midnight">Show transactions
+                            for</label>
+                        <ng-container *ngIf="accounts$ | async as accounts; else accountSelectSkeleton">
+                            <select #accountFilterSelect id="accountFilter"
+                                class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-midnight focus:border-midnight focus:outline-none focus:ring-2 focus:ring-midnight/20"
+                                [value]="selectedAccountId() ?? ''"
+                                (change)="changeAccountFilter(accountFilterSelect.value || null)">
+                                <option value="">All accounts</option>
+                                <option *ngFor="let account of accounts" [value]="account.id">
+                                    {{ account.name }}
+                                </option>
+                            </select>
                         </ng-container>
                     </div>
-                    <ng-template #accountChipsSkeleton>
-                        <div class="flex flex-wrap items-center gap-2 animate-pulse" aria-hidden="true">
-                            <span *ngFor="let _ of accountChipSkeletons"
-                                class="h-9 w-24 rounded-full bg-slate-200"></span>
+                    <ng-template #accountSelectSkeleton>
+                        <div class="animate-pulse" aria-hidden="true">
+                            <div class="h-11 w-64 rounded-2xl bg-slate-200"></div>
                         </div>
                     </ng-template>
 
@@ -53,6 +50,78 @@
                                 <span *ngFor="let _ of totalSkeletons" class="h-4 w-28 rounded bg-slate-200"></span>
                             </div>
                         </div>
+                    </ng-template>
+
+                    <section class="rounded-2xl border border-slate-200 bg-white p-6">
+                        <h2 class="text-lg font-semibold text-midnight">Log manual transaction</h2>
+                        <p class="mt-2 text-sm text-slate-500">Perfect for testing balance updates or simulating
+                            new activity before a real backend arrives.</p>
+                        <form [formGroup]="newTransactionForm" (ngSubmit)="submitNewTransaction()"
+                            class="mt-4 space-y-4 text-sm text-slate-600">
+                            <div class="space-y-2">
+                                <label for="transactionAccount"
+                                    class="text-sm font-medium text-midnight">Account</label>
+                                <select id="transactionAccount" formControlName="accountId"
+                                    class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-midnight focus:border-midnight focus:outline-none focus:ring-2 focus:ring-midnight/20">
+                                    <option value="" disabled>Select account</option>
+                                    <option *ngFor="let account of (accounts$ | async)" [value]="account.id">
+                                        {{ account.name }} · {{ account.accountNumber }}
+                                    </option>
+                                </select>
+                            </div>
+                            <div class="space-y-2">
+                                <label for="transactionDescription"
+                                    class="text-sm font-medium text-midnight">Description</label>
+                                <input id="transactionDescription" type="text" formControlName="description"
+                                    class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-midnight focus:border-midnight focus:outline-none focus:ring-2 focus:ring-midnight/20"
+                                    placeholder="e.g. Freelance payout" />
+                            </div>
+                            <div class="space-y-2">
+                                <label for="transactionCategory"
+                                    class="text-sm font-medium text-midnight">Category</label>
+                                <input id="transactionCategory" type="text" formControlName="category"
+                                    class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-midnight focus:border-midnight focus:outline-none focus:ring-2 focus:ring-midnight/20"
+                                    placeholder="Category" />
+                            </div>
+                            <div class="grid gap-4 md:grid-cols-2">
+                                <div class="space-y-2">
+                                    <label for="transactionAmount"
+                                        class="text-sm font-medium text-midnight">Amount</label>
+                                    <input id="transactionAmount" type="number" min="1" step="0.01"
+                                        formControlName="amount"
+                                        class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-midnight focus:border-midnight focus:outline-none focus:ring-2 focus:ring-midnight/20">
+                                </div>
+                                <div class="space-y-2">
+                                    <label for="transactionDirection"
+                                        class="text-sm font-medium text-midnight">Direction</label>
+                                    <select id="transactionDirection" formControlName="direction"
+                                        class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-midnight focus:border-midnight focus:outline-none focus:ring-2 focus:ring-midnight/20">
+                                        <option value="debit">Debit (money out)</option>
+                                        <option value="credit">Credit (money in)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <button type="submit"
+                                class="inline-flex w-full items-center justify-center rounded-full bg-midnight px-6 py-3 text-sm font-medium text-white transition hover:bg-slate-900 disabled:cursor-not-allowed disabled:opacity-70"
+                                [disabled]="newTransactionForm.invalid || isCreating()">
+                                <ng-container *ngIf="!isCreating(); else creatingTransaction">Log
+                                    transaction</ng-container>
+                            </button>
+                            <p *ngIf="createSuccess()"
+                                class="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-xs text-emerald-600">
+                                {{ createSuccess() }}
+                            </p>
+                            <p *ngIf="createError()"
+                                class="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs text-rose-600">
+                                {{ createError() }}
+                            </p>
+                        </form>
+                    </section>
+                    <ng-template #creatingTransaction>
+                        <span class="inline-flex items-center gap-2">
+                            <span class="h-2 w-2 animate-ping rounded-full bg-white"></span>
+                            Saving…
+                        </span>
                     </ng-template>
 
                     <ng-container *ngIf="filteredTransactions$ | async as transactions; else transactionsSkeleton">

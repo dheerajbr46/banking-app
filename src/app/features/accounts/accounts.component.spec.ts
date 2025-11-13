@@ -6,6 +6,7 @@ import { AccountsComponent } from './accounts.component';
 import { BankDataService } from '../../core/services/bank-data.service';
 
 const bankDataStub = {
+  refresh$: of(void 0),
   getAccounts: () =>
     of([
       {

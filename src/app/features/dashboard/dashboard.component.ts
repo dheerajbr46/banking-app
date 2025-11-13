@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { map } from 'rxjs';
+import { map, merge, of, shareReplay, switchMap } from 'rxjs';
 
 import { BankDataService } from '../../core/services/bank-data.service';
 import { Transaction } from '../../core/models/transaction.model';
@@ -13,11 +13,23 @@ import { Transaction } from '../../core/models/transaction.model';
 export class DashboardComponent {
   private readonly bankData = inject(BankDataService);
 
-  readonly summary$ = this.bankData.getDashboardSummary();
-  readonly accounts$ = this.bankData.getAccounts();
-  readonly recentTransactions$ = this.bankData
-    .getTransactions()
-    .pipe(map((transactions) => this.toRecentTransactions(transactions)));
+  private readonly refreshTrigger$ = merge(of(void 0), this.bankData.refresh$);
+
+  readonly accounts$ = this.refreshTrigger$.pipe(
+    switchMap(() => this.bankData.getAccounts()),
+    shareReplay({ bufferSize: 1, refCount: true })
+  );
+
+  readonly summary$ = this.refreshTrigger$.pipe(
+    switchMap(() => this.bankData.getDashboardSummary()),
+    shareReplay({ bufferSize: 1, refCount: true })
+  );
+
+  readonly recentTransactions$ = this.refreshTrigger$.pipe(
+    switchMap(() => this.bankData.getTransactions()),
+    map((transactions) => this.toRecentTransactions(transactions)),
+    shareReplay({ bufferSize: 1, refCount: true })
+  );
 
   readonly topAccounts$ = this.accounts$.pipe(
     map((accounts) => [...accounts].sort((a, b) => b.balance - a.balance).slice(0, 2))

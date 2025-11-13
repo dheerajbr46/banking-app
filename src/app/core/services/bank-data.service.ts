@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, map } from 'rxjs';
+import { BehaviorSubject, Observable, map, tap } from 'rxjs';
 
 import { Account } from '../models/account.model';
 import { Transaction } from '../models/transaction.model';
@@ -11,6 +11,8 @@ import { unwrapPayload } from '../utils/http.utils';
 @Injectable({ providedIn: 'root' })
 export class BankDataService {
     private readonly baseUrl = 'api';
+    private readonly dataRefreshSubject = new BehaviorSubject<void>(undefined);
+    readonly refresh$ = this.dataRefreshSubject.asObservable();
 
     constructor(private readonly http: HttpClient) { }
 
@@ -46,5 +48,39 @@ export class BankDataService {
         return this.http
             .get<UserProfile[] | { data: UserProfile[] }>(`${this.baseUrl}/users`)
             .pipe(map((response) => unwrapPayload(response)[0]));
+    }
+
+    createTransfer(payload: {
+        fromAccountId: string;
+        toAccountId: string;
+        amount: number;
+        memo?: string;
+        schedule: 'once' | 'weekly' | 'monthly';
+    }) {
+        return this.http
+            .post<{ transferId: string }>(`${this.baseUrl}/transfers`, payload)
+            .pipe(tap(() => this.triggerRefresh()));
+    }
+
+    createTransaction(transaction: Partial<Transaction> & { accountId: string; amount: number }) {
+        return this.http
+            .post<Transaction>(`${this.baseUrl}/transactions`, transaction)
+            .pipe(tap(() => this.triggerRefresh()));
+    }
+
+    updateAccount(account: Partial<Account> & { id: string }) {
+        return this.http
+            .put<Account>(`${this.baseUrl}/accounts/${account.id}`, account)
+            .pipe(tap(() => this.triggerRefresh()));
+    }
+
+    updateUserProfile(profile: Partial<UserProfile> & { id: string }) {
+        return this.http
+            .put<UserProfile>(`${this.baseUrl}/users/${profile.id}`, profile)
+            .pipe(tap(() => this.triggerRefresh()));
+    }
+
+    private triggerRefresh(): void {
+        this.dataRefreshSubject.next(undefined);
     }
 }
