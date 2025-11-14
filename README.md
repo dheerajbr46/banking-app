@@ -77,13 +77,15 @@ This repo ships to GitHub Pages automatically via `.github/workflows/deploy.yml`
 	- `npm run test -- --watch=false --browsers=ChromeHeadless`
 	- `npm run build -- --configuration production --base-href "/banking-app/"`
 	- Deploy `dist/banking-app` to the `gh-pages` branch using `JamesIves/github-pages-deploy-action`.
+	- (Optional but recommended) Set a repository secret named `API_BASE_URL` with your deployed backend origin (for example, `https://banking-backend.onrender.com/api`). The workflow replaces the placeholder URL in `environment.production.ts` before building. If the secret is missing, the build keeps the placeholder and the app will still call `https://your-production-backend.example.com/api`, resulting in the login error shown in the screenshot above.
 3. GitHub Pages is configured to serve from the `gh-pages` branch root.
 
 ### First-time setup
 
 1. Ensure the workflow file exists: `.github/workflows/deploy.yml`.
-2. Push changes to `main` – the first run will build & deploy.
-3. In GitHub → **Settings → Pages**, set **Source** to `Deploy from branch`, choose `gh-pages`, folder `/`.
+2. (Recommended) Add the `API_BASE_URL` repository secret pointing to your hosted backend’s `/api` root. This lets the action inject the correct URL without committing environment files to version control.
+3. Push changes to `main` – the first run will build & deploy.
+4. In GitHub → **Settings → Pages**, set **Source** to `Deploy from branch`, choose `gh-pages`, folder `/`.
 4. Visit `https://dheerajbr46.github.io/banking-app/` once the Action completes.
 
 ### Manual deploy trigger
