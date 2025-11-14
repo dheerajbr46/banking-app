@@ -18,7 +18,9 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Configuration
 @EnableWebSecurity
@@ -27,8 +29,8 @@ public class SecurityConfig {
 
     private final JwtFilter jwtFilter;
 
-    @Value("${bankapp.frontend.origin:http://localhost:4200}")
-    private String frontendOrigin;
+    @Value("${bankapp.frontend.origins:http://localhost:4200}")
+    private String frontendOriginsProperty;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -48,8 +50,17 @@ public class SecurityConfig {
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of(frontendOrigin));
+    CorsConfiguration configuration = new CorsConfiguration();
+    List<String> allowedOrigins = Arrays.stream(frontendOriginsProperty.split(","))
+        .map(String::trim)
+        .filter(origin -> !origin.isBlank())
+        .collect(Collectors.toList());
+
+    if (allowedOrigins.isEmpty()) {
+        allowedOrigins = List.of("http://localhost:4200");
+    }
+
+    configuration.setAllowedOrigins(allowedOrigins);
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);

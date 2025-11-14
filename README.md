@@ -148,6 +148,16 @@ If your platform offers a deploy hook or API, you can extend `backend-deploy.yml
 
 This keeps the workflow flexible while letting you wire up automatic releases as soon as your hosting provider is ready.
 
+### CORS configuration
+
+The backend exposes a comma-separated property `bankapp.frontend.origins` (honored via the `BANKAPP_FRONTEND_ORIGINS` environment variable). By default it allows both local development (`http://localhost:4200`) and the GitHub Pages origin (`https://dheerajbr46.github.io`). If you host the frontend elsewhere, set the environment variable on your container platform, for example:
+
+```bash
+BANKAPP_FRONTEND_ORIGINS=https://your-frontend.example.com,https://dheerajbr46.github.io
+```
+
+Multiple origins are supported; each value is trimmed and applied to the CORS allowlist.
+
 ## Development notes
 
 - Tailwind utility classes live directly in templates for rapid UI iteration.

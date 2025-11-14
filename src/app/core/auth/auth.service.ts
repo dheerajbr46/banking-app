@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { BehaviorSubject, Observable, catchError, map, tap, throwError } from 'rxjs';
+import { BehaviorSubject, Observable, catchError, map, of, tap, throwError } from 'rxjs';
 
 import { AuthCredentials, RegistrationPayload, UserProfile } from '../models/user.model';
 import { environment } from '../../../environments/environment';
@@ -19,13 +19,30 @@ interface BackendUser {
     role?: string;
 }
 
+interface MockUser extends BackendUser {
+    password: string;
+}
+
 const STORAGE_TOKEN_KEY = 'banking-app.token';
 const STORAGE_USER_KEY = 'banking-app.user';
+const STORAGE_MOCK_USERS_KEY = 'banking-app.mock-users';
+const DEFAULT_MOCK_USERS: MockUser[] = [
+    {
+        id: 'user-1',
+        username: 'avery',
+        fullName: 'Avery Hughes',
+        email: 'avery@interactive.bank',
+        password: 'banking123',
+        role: 'customer',
+    },
+];
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
     private readonly apiBaseUrl = environment.apiBaseUrl;
     private readonly authEndpoint = `${this.apiBaseUrl}/auth`;
+    private readonly useMockAuth = environment.useMockAuth ?? false;
+    private mockUsers: MockUser[] = this.useMockAuth ? this.restoreMockUsers() : [];
     private readonly currentUserSubject = new BehaviorSubject<UserProfile | null>(this.restoreUser());
 
     readonly currentUser$ = this.currentUserSubject.asObservable();
@@ -39,6 +56,18 @@ export class AuthService {
             email,
             password: credentials.password,
         };
+
+        if (this.useMockAuth) {
+            const user = this.mockUsers.find((item) => item.email.toLowerCase() === email);
+
+            if (!user || user.password !== credentials.password) {
+                return throwError(() => new Error('Invalid email or password.'));
+            }
+
+            const token = `mock-token-${user.id ?? 'session'}`;
+            this.persistSession(token, user);
+            return of(this.mapProfile(user));
+        }
 
         return this.http
             .post<LoginResponse>(`${this.authEndpoint}/login`, payload)
@@ -59,6 +88,32 @@ export class AuthService {
             password: payload.password,
         };
 
+        if (this.useMockAuth) {
+            const normalizedUsername = username.toLowerCase();
+
+            if (this.mockUsers.some((item) => item.email.toLowerCase() === email)) {
+                return throwError(() => new Error('Email already registered.'));
+            }
+
+            if (this.mockUsers.some((item) => (item.username ?? '').toLowerCase() === normalizedUsername)) {
+                return throwError(() => new Error('Username already taken.'));
+            }
+
+            const mockUser: MockUser = {
+                id: `mock-${Date.now()}`,
+                email,
+                username,
+                fullName: requestBody.fullName,
+                password: payload.password,
+                role: 'customer',
+            };
+
+            this.mockUsers = [...this.mockUsers, mockUser];
+            this.persistMockUsers();
+
+            return of(this.mapProfile(mockUser));
+        }
+
         return this.http
             .post<LoginResponse>(`${this.authEndpoint}/register`, requestBody)
             .pipe(
@@ -71,6 +126,12 @@ export class AuthService {
         const candidate = username.trim();
         if (!candidate) {
             return throwError(() => new Error('Username is required'));
+        }
+
+        if (this.useMockAuth) {
+            const normalized = candidate.toLowerCase();
+            const taken = this.mockUsers.some((user) => (user.username ?? '').toLowerCase() === normalized);
+            return of(!taken);
         }
 
         return this.http
@@ -149,5 +210,30 @@ export class AuthService {
             return error;
         }
         return new Error('Unable to sign in.');
+    }
+
+    private restoreMockUsers(): MockUser[] {
+        const stored = localStorage.getItem(STORAGE_MOCK_USERS_KEY);
+        if (!stored) {
+            return [...DEFAULT_MOCK_USERS];
+        }
+
+        try {
+            const parsed = JSON.parse(stored) as MockUser[];
+            if (!Array.isArray(parsed) || !parsed.length) {
+                return [...DEFAULT_MOCK_USERS];
+            }
+            return parsed;
+        } catch (error) {
+            console.warn('Failed to parse stored mock users. Falling back to defaults.', error);
+            return [...DEFAULT_MOCK_USERS];
+        }
+    }
+
+    private persistMockUsers(): void {
+        if (!this.useMockAuth) {
+            return;
+        }
+        localStorage.setItem(STORAGE_MOCK_USERS_KEY, JSON.stringify(this.mockUsers));
     }
 }
