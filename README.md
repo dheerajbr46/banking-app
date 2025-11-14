@@ -98,6 +98,54 @@ ng build --configuration production --base-href "/banking-app/"
 
 Serve the contents of `dist/banking-app` with any static server (e.g., `npx http-server dist/banking-app`).
 
+## Backend deployment pipeline (GitHub Actions + GHCR)
+
+The Spring Boot service inside `backend/` now has an automated workflow at `.github/workflows/backend-deploy.yml` that keeps your API in sync with `main`.
+
+### What the workflow does
+
+On every push to `main` that touches `backend/**` (or when manually dispatched), the action:
+
+1. Checks out the repo and installs Temurin JDK 17.
+2. Runs `mvn -B package` to execute tests and assemble the runnable JAR.
+3. Uploads the packaged artifact for quick download from the workflow run.
+4. Builds a production image using `backend/Dockerfile` and publishes it to the GitHub Container Registry (GHCR) as `ghcr.io/<owner>/banking-backend` with branch and commit SHA tags.
+
+No extra secrets are required—`GITHUB_TOKEN` already carries the permissions needed to push to GHCR.
+
+### First-time setup
+
+1. Make sure GitHub Packages is enabled for your account/organization.
+2. In **Repository Settings → Actions → General**, confirm **Workflow permissions** grants `Read and write` to `GITHUB_TOKEN` (needed for GHCR pushes).
+3. Merge to `main` (or trigger the workflow manually) to build and publish the first image.
+
+### Running the backend image
+
+Pull and run the published container anywhere Docker is available:
+
+```bash
+docker run -d --name banking-backend -p 8080:8080 ghcr.io/dheerajbr46/banking-backend:main
+```
+
+Replace the tag (`main`) with a specific branch or commit SHA if you prefer immutable deployments. The container defaults to the `prod` Spring profile and exposes port `8080`.
+
+### Hooking up a hosting provider
+
+Most managed container platforms (Render, Railway, Fly.io, Azure Container Apps, etc.) can deploy directly from GHCR. Point the provider at the `ghcr.io/dheerajbr46/banking-backend:main` image (or a SHA tag) and expose port `8080`. Once a public URL is available, update `src/environments/environment.production.ts` so the Angular app calls the correct API base.
+
+If your platform offers a deploy hook or API, you can extend `backend-deploy.yml` with an additional job that `curl`s that endpoint after the image push. A sample step is shown below—just drop it into a new job that depends on `build-and-push-image` and set the hook URL via a repository secret or variable:
+
+```yaml
+- name: Trigger platform deploy
+	env:
+		DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+	if: ${{ env.DEPLOY_HOOK != '' }}
+	run: |
+		curl -f -X POST "$DEPLOY_HOOK"
+```
+
+This keeps the workflow flexible while letting you wire up automatic releases as soon as your hosting provider is ready.
+
 ## Development notes
 
 - Tailwind utility classes live directly in templates for rapid UI iteration.

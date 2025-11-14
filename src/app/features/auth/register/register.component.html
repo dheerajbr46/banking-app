@@ -1,0 +1,176 @@
+<section class="bg-white">
+    <div class="mx-auto grid min-h-[60vh] max-w-4xl place-items-center px-6 py-20">
+        <div class="w-full rounded-3xl border border-slate-200 bg-white/90 p-10 shadow-sm">
+            <h1 class="text-3xl font-semibold text-midnight">Create your account</h1>
+            <p class="mt-4 text-slate-500">
+                Start exploring your banking experience with a personalised dashboard and secure money tools.
+            </p>
+
+            <form [formGroup]="registerForm" (ngSubmit)="submit()" class="mt-10 space-y-6">
+                <div class="space-y-2">
+                    <label class="text-sm font-medium text-midnight" for="name">Full name</label>
+                    <input id="name" type="text" formControlName="name" autocomplete="name"
+                        class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-midnight shadow-sm transition focus:border-midnight focus:outline-none focus:ring-2 focus:ring-midnight/20"
+                        [class.border-rose-400]="isControlInvalid('name')" placeholder="Avery Johnson">
+                    <p *ngIf="isControlInvalid('name')" class="text-sm text-rose-500">
+                        Please enter your full name (at least 3 characters).
+                    </p>
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-sm font-medium text-midnight" for="username">User ID</label>
+                    <input id="username" type="text" formControlName="username" autocomplete="username"
+                        class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-midnight shadow-sm transition focus:border-midnight focus:outline-none focus:ring-2 focus:ring-midnight/20 disabled:cursor-not-allowed disabled:bg-slate-100"
+                        [class.border-rose-400]="isControlInvalid('username')" placeholder="avery.j">
+                    <div class="min-h-[1.5rem] text-sm">
+                        <ng-container *ngIf="registerForm.get('username') as usernameControl">
+                            <p *ngIf="usernameControl.pending"
+                                class="flex items-center gap-2 text-slate-400 transition">
+                                <span class="h-2 w-2 animate-ping rounded-full bg-slate-400"></span>
+                                {{ usernameStatusLabel() }}
+                            </p>
+                            <p *ngIf="isControlInvalid('username') && usernameControl.hasError('required')"
+                                class="text-rose-500">Pick a unique user ID.</p>
+                            <p *ngIf="isControlInvalid('username') && (usernameControl.hasError('minlength') || usernameControl.hasError('maxlength'))"
+                                class="text-rose-500">User ID must be between 3 and 24 characters.</p>
+                            <p *ngIf="isControlInvalid('username') && usernameControl.hasError('pattern')"
+                                class="text-rose-500">Use letters, numbers, dots, underscores, or dashes only.</p>
+                            <p *ngIf="!usernameControl.pending && usernameAvailabilityState() === 'available' && usernameControl.valid"
+                                class="flex items-center gap-2 text-emerald-600">
+                                <span
+                                    class="inline-flex h-4 w-4 items-center justify-center rounded-full bg-emerald-100 text-[10px] font-semibold text-emerald-700">✔</span>
+                                {{ usernameStatusLabel() }}
+                            </p>
+                            <p *ngIf="!usernameControl.pending && usernameAvailabilityState() === 'unavailable'"
+                                class="flex items-center gap-2 text-rose-500">
+                                <span
+                                    class="inline-flex h-4 w-4 items-center justify-center rounded-full bg-rose-100 text-[10px] font-semibold text-rose-600">✖</span>
+                                {{ usernameStatusLabel() }}
+                            </p>
+                            <p *ngIf="!usernameControl.pending && usernameAvailabilityState() === 'error'"
+                                class="text-amber-500">{{ usernameStatusLabel() }}</p>
+                        </ng-container>
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-sm font-medium text-midnight" for="email">Email address</label>
+                    <input id="email" type="email" formControlName="email" autocomplete="email"
+                        class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-midnight shadow-sm transition focus:border-midnight focus:outline-none focus:ring-2 focus:ring-midnight/20 disabled:cursor-not-allowed disabled:bg-slate-100"
+                        [class.border-rose-400]="isControlInvalid('email')" placeholder="you@example.com">
+                    <p *ngIf="isControlInvalid('email')" class="text-sm text-rose-500">
+                        Enter a valid email address.
+                    </p>
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-sm font-medium text-midnight" for="password">Password</label>
+                    <div class="relative">
+                        <input id="password" [type]="passwordVisible() ? 'text' : 'password'" formControlName="password"
+                            autocomplete="new-password"
+                            class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 pr-24 text-sm text-midnight shadow-sm transition focus:border-midnight focus:outline-none focus:ring-2 focus:ring-midnight/20 disabled:cursor-not-allowed disabled:bg-slate-100"
+                            [class.border-rose-400]="isControlInvalid('password')" placeholder="StrongPass!">
+                        <button type="button" (click)="togglePasswordVisibility()"
+                            class="absolute inset-y-0 right-0 flex items-center rounded-r-2xl px-4 text-sm font-semibold text-midnight transition disabled:opacity-60"
+                            [attr.aria-pressed]="passwordVisible()"
+                            [disabled]="!!registerForm.get('password')?.disabled">
+                            {{ passwordVisible() ? 'Hide' : 'Show' }}
+                        </button>
+                    </div>
+                    <ul class="space-y-1 text-sm">
+                        <li class="flex items-center gap-2" [class.text-emerald-600]="passwordLengthMet()"
+                            [class.text-rose-500]="!passwordLengthMet()">
+                            <span class="inline-flex h-4 w-4 items-center justify-center rounded-full"
+                                [class.bg-emerald-100]="passwordLengthMet()" [class.bg-rose-100]="!passwordLengthMet()"
+                                [class.text-emerald-700]="passwordLengthMet()"
+                                [class.text-rose-600]="!passwordLengthMet()">
+                                {{ passwordLengthMet() ? '✔' : '✖' }}
+                            </span>
+                            Use at least 8 characters.
+                        </li>
+                        <li class="flex items-center gap-2" [class.text-emerald-600]="passwordCaseRequirementMet()"
+                            [class.text-rose-500]="!passwordCaseRequirementMet()">
+                            <span class="inline-flex h-4 w-4 items-center justify-center rounded-full"
+                                [class.bg-emerald-100]="passwordCaseRequirementMet()"
+                                [class.bg-rose-100]="!passwordCaseRequirementMet()"
+                                [class.text-emerald-700]="passwordCaseRequirementMet()"
+                                [class.text-rose-600]="!passwordCaseRequirementMet()">
+                                {{ passwordCaseRequirementMet() ? '✔' : '✖' }}
+                            </span>
+                            Include one uppercase and one lowercase letter.
+                        </li>
+                        <li class="flex items-center gap-2" [class.text-emerald-600]="passwordSpecialRequirementMet()"
+                            [class.text-rose-500]="!passwordSpecialRequirementMet()">
+                            <span class="inline-flex h-4 w-4 items-center justify-center rounded-full"
+                                [class.bg-emerald-100]="passwordSpecialRequirementMet()"
+                                [class.bg-rose-100]="!passwordSpecialRequirementMet()"
+                                [class.text-emerald-700]="passwordSpecialRequirementMet()"
+                                [class.text-rose-600]="!passwordSpecialRequirementMet()">
+                                {{ passwordSpecialRequirementMet() ? '✔' : '✖' }}
+                            </span>
+                            Include at least one special character.
+                        </li>
+                    </ul>
+                    <p *ngIf="isControlInvalid('password') && registerForm.get('password')?.hasError('minlength')"
+                        class="text-sm text-rose-500">
+                        Password must be at least 8 characters long.
+                    </p>
+                    <p *ngIf="isControlInvalid('password') && registerForm.get('password')?.hasError('passwordWeak')"
+                        class="text-sm text-rose-500">
+                        Add at least one uppercase letter, lowercase letter, and special character.
+                    </p>
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-sm font-medium text-midnight" for="confirm-password">Confirm password</label>
+                    <input id="confirm-password" type="password" formControlName="confirmPassword"
+                        autocomplete="new-password"
+                        class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-midnight shadow-sm transition focus:border-midnight focus:outline-none focus:ring-2 focus:ring-midnight/20 disabled:cursor-not-allowed disabled:bg-slate-100"
+                        [class.border-rose-400]="showPasswordMismatch()" placeholder="Repeat password">
+                    <p *ngIf="showPasswordMismatch()" class="text-sm text-rose-500">
+                        Passwords must match.
+                    </p>
+                </div>
+
+                <div class="flex items-center justify-between text-sm text-slate-500">
+                    <label class="inline-flex items-center gap-2">
+                        <input type="checkbox" formControlName="acceptTerms"
+                            class="h-4 w-4 rounded border-slate-300 text-midnight focus:ring-midnight/40"
+                            [disabled]="!!registerForm.get('acceptTerms')?.disabled">
+                        <span>I agree to the terms of service</span>
+                    </label>
+                    <span *ngIf="isControlInvalid('acceptTerms')" class="text-sm text-rose-500">Required</span>
+                </div>
+
+                <div class="space-y-3">
+                    <button type="submit"
+                        class="inline-flex w-full items-center justify-center rounded-full bg-midnight px-6 py-3 text-sm font-medium text-white transition hover:bg-slate-900 disabled:cursor-not-allowed disabled:opacity-70"
+                        [disabled]="isSubmitting() || registerForm.invalid">
+                        <span *ngIf="!isSubmitting(); else pendingState">Create account</span>
+                    </button>
+                    <ng-template #pendingState>
+                        <span class="flex items-center gap-2">
+                            <span class="h-3 w-3 animate-ping rounded-full bg-white/70"></span>Creating account…
+                        </span>
+                    </ng-template>
+                    <p *ngIf="errorMessage()"
+                        class="rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-600">
+                        {{ errorMessage() }}
+                    </p>
+                    <p *ngIf="successMessage()"
+                        class="flex flex-wrap items-center justify-center gap-2 rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+                        {{ successMessage() }}
+                        <a routerLink="/auth/login" class="font-semibold text-emerald-700 underline">
+                            Sign in now
+                        </a>
+                    </p>
+                </div>
+
+                <p class="text-center text-sm text-slate-500">
+                    Already have an account?
+                    <a routerLink="/auth/login" class="font-medium text-midnight hover:underline">Sign in</a>
+                </p>
+            </form>
+        </div>
+    </div>
+</section>

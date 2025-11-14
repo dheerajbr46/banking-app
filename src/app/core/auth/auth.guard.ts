@@ -34,7 +34,7 @@ export class AuthGuard implements CanActivate, CanMatch {
     }
 
     private redirectToAuth(returnUrl: string): UrlTree {
-        return this.router.createUrlTree(['/auth'], {
+        return this.router.createUrlTree(['/auth', 'login'], {
             queryParams: {
                 returnUrl,
             },

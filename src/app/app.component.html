@@ -22,7 +22,8 @@
         </ng-container>
         <ng-template #guestCtas>
           <button mat-stroked-button color="primary" (click)="handleAuthCta()">Login</button>
-          <a mat-flat-button color="primary" routerLink="/auth" class="!bg-midnight hover:!bg-slate-900">Get started</a>
+          <a mat-flat-button color="primary" routerLink="/auth/register" class="!bg-midnight hover:!bg-slate-900">Get
+            started</a>
         </ng-template>
       </div>
       <button #mobileNavTrigger type="button"
@@ -48,7 +49,7 @@
           <button mat-stroked-button color="primary" (click)="handleAuthCta()">{{ ctaLabel() }}</button>
           <button *ngIf="isAuthenticated()" mat-flat-button color="primary" routerLink="/transfer"
             class="!bg-midnight hover:!bg-slate-900" (click)="closeMobileNav()">New transfer</button>
-          <button *ngIf="!isAuthenticated()" mat-flat-button color="primary" routerLink="/auth"
+          <button *ngIf="!isAuthenticated()" mat-flat-button color="primary" routerLink="/auth/register"
             class="!bg-midnight hover:!bg-slate-900" (click)="closeMobileNav()">Create demo account</button>
         </li>
       </ul>

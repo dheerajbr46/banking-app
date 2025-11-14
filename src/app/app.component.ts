@@ -81,7 +81,7 @@ export class AppComponent {
       this.authService.logout();
       this.router.navigateByUrl('/home');
     } else {
-      this.router.navigate(['/auth']);
+      this.router.navigate(['/auth', 'login']);
     }
     this.closeMobileNav(true);
   }

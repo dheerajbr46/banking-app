@@ -1,7 +1,7 @@
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ReactiveFormsModule } from '@angular/forms';
-import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { of } from 'rxjs';
 
@@ -19,10 +19,6 @@ const activatedRouteStub = {
   queryParamMap: of(convertToParamMap({})),
 };
 
-const routerStub = {
-  navigateByUrl: jasmine.createSpy('navigateByUrl'),
-};
-
 describe('AuthComponent', () => {
   let component: AuthComponent;
   let fixture: ComponentFixture<AuthComponent>;
@@ -33,7 +29,6 @@ describe('AuthComponent', () => {
       declarations: [AuthComponent],
       providers: [
         { provide: AuthService, useClass: AuthServiceStub },
-        { provide: Router, useValue: routerStub },
         { provide: ActivatedRoute, useValue: activatedRouteStub },
       ],
       schemas: [NO_ERRORS_SCHEMA],

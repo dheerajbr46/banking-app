@@ -8,6 +8,7 @@ import {
 import { Observable } from 'rxjs';
 
 import { AuthService } from './auth.service';
+import { environment } from '../../../environments/environment';
 
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
@@ -16,7 +17,9 @@ export class AuthInterceptor implements HttpInterceptor {
     intercept(req: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
         const token = this.authService.accessToken;
 
-        if (!token || !req.url.startsWith('api/')) {
+        const isBackendRequest = req.url.startsWith(environment.apiBaseUrl);
+
+        if (!token || !isBackendRequest) {
             return next.handle(req);
         }
 

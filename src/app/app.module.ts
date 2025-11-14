@@ -22,7 +22,7 @@ import { AuthInterceptor } from './core/auth/auth.interceptor';
     MatButtonModule,
     MatIconModule,
     HttpClientInMemoryWebApiModule.forRoot(MockApiService, {
-      passThruUnknownUrl: false,
+      passThruUnknownUrl: true,
       delay: 300,
     }),
   ],

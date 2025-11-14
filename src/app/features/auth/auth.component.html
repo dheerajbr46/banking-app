@@ -3,9 +3,7 @@
         <div class="w-full rounded-3xl border border-slate-200 bg-white/90 p-10 shadow-sm">
             <h1 class="text-3xl font-semibold text-midnight">Welcome back</h1>
             <p class="mt-4 text-slate-500">
-                Sign in with your mock credentials to explore the secured areas of the banking experience. Use
-                <span class="font-medium text-midnight">avery&#64;interactive.bank</span> with password
-                <span class="font-medium text-midnight">banking123</span>.
+                Sign in with your banking credentials to explore the secured areas of the experience.
             </p>
 
             <form [formGroup]="loginForm" (ngSubmit)="submit()" class="mt-10 space-y-6">
@@ -54,6 +52,11 @@
                         {{ errorMessage() }}
                     </p>
                 </div>
+
+                <p class="text-center text-sm text-slate-500">
+                    Don&rsquo;t have an account?
+                    <a routerLink="/auth/register" class="font-medium text-midnight hover:underline">Create one</a>
+                </p>
             </form>
         </div>
     </div>
